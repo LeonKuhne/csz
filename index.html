@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>C,S,Visualize</title>
+<meta charset="utf-8" />
+<meta name="description" content="look at me">
+
+<!-- CSS -->
+<style>
+html, body {
+  margin: 0;
+  line-height: 0;
+  height: 100%;
+}
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+</style>
+
+<!-- JS -->
+<script src="src/csz.js"></script>
+<script>
+window.onload = () => {
+  const csz = new CSZ()
+
+  // config
+  const fps = 60 // render rate
+  const tps = 1000 // tick rate
+  const speedMultiplier = 0.00001
+  const gravityMultiplier = 0.0001
+  // particle collision dampening factor, decrease to smoothen
+  csz.maxDelta = 0.001
+  //csz.wallRepel = 0.0001
+
+  // 0-1 sliders
+  // TODO
+  // const sliders = []
+
+  // componets
+  const fileInput = document.getElementById('fileInput')
+  const speedSlider = document.getElementById('speedSlider')
+  const colorColumns = [
+    document.getElementById('redColumn'),
+    document.getElementById('greenColumn'),
+    document.getElementById('blueColumn')
+  ]
+
+  // handle file imports
+  fileInput.addEventListener('change', (event) => {
+    csz.importCSV(event.target.files[0])
+  })
+  if (fileInput.value) { csz.importCSV(fileInput.files[0]) }
+
+  // adjust simulation speed
+  speedSlider.addEventListener('input', (event) => {
+    csz.speed = Math.pow(event.target.value, 2) * speedMultiplier
+    //csz.speed = event.target.value * speedMultiplier
+  })
+  speedSlider.dispatchEvent(new Event('input'))
+
+  // adjust particle antigravity
+  const antigravitySlider = document.getElementById('antigravitySlider')
+  antigravitySlider.addEventListener('input', (event) => {
+    csz.antigravity = Math.pow(event.target.value, 2) * gravityMultiplier
+    //csz.antigravity = event.target.value * gravityMultiplier
+  })
+  antigravitySlider.dispatchEvent(new Event('input'))
+
+  // color mapping
+  csz.onReady = () => {
+    // create options
+    for (let elem of colorColumns) {
+      for (let column of csz.dimensions) {
+        let option = document.createElement('option')
+        option.value = column
+        option.innerHTML = column
+        elem.appendChild(option)
+      }
+    }
+
+    // map colors
+    for (let i = 0; i < colorColumns.length; i++) {
+      let elem = colorColumns[i]
+      // update color mapping
+      elem.addEventListener('change', (event) => {
+        let column = event.target.value
+        if (column == '') { return }
+        csz.colorColumn(column, i)
+      })
+      // map selected value to column
+      elem.selectedIndex = i
+      elem.dispatchEvent(new Event('change'))
+    }
+  }
+
+  // render
+  const canvas = document.querySelector('#canvas')
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+  const ctx = canvas.getContext('2d')
+  const renderDelay = 1000 / fps 
+  const render = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    csz.render(ctx)
+    setTimeout(() => { requestAnimationFrame(render) }, renderDelay)
+  }
+  requestAnimationFrame(render)
+
+  // run
+  const tickDelay = 1000 / tps
+  const run = () => {
+    csz.tick()
+    setTimeout(() => run(), tickDelay)
+  }
+  run()
+}
+</script>
+</head>
+
+<!-- HTML -->
+<body>
+  <h1>TODO: learn how to simulate neighbor spaces for physics calculations</h1>
+  <input type="file" id="fileInput" />
+  <p>Speed <input type="range" id="speedSlider" min="1" /></p>
+  <p>Gravity <input type="range" id="antigravitySlider" min="1" /></p>
+  <p>Red <select id="redColumn"></select></p>
+  <p>Green <select id="greenColumn"></select></p>
+  <p>Blue <select id="blueColumn"></select></p>
+  <canvas id="canvas"></canvas>
+
+</body>
+<html>
