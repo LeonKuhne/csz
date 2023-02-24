@@ -29,19 +29,24 @@ window.onload = () => {
   // config
   const fps = 60 // render rate
   const tps = 1000 // tick rate
-  const speedMultiplier = 0.00001
-  const gravityMultiplier = 0.0001
-  // particle collision dampening factor, decrease to smoothen
-  csz.maxDelta = 0.001
-  //csz.wallRepel = 0.0001
+  const speedMultiplier = 1
+  const gravityMultiplier = 1000
+  const centerGravityMultiplier = 0.01
+  csz.wrap = false
+  csz.spaceDepth = 10
+  csz.batchSize = 100 // number of particles to render per frame
 
   // 0-1 sliders
   // TODO
-  // const sliders = []
+  const sliders = {
+    Speed: [csz.speed, (val) => csz.speed = Math.pow(val, 2) * speedMultiplier],
+    Gravity: [csz.antigravity, (val) => csz.antigravity = Math.pow(val, 2) * gravityMultiplier],
+    Spread: [csz.centerGravity, (val) => csz.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
+  }
 
   // componets
   const fileInput = document.getElementById('fileInput')
-  const speedSlider = document.getElementById('speedSlider')
+  const slidersElem = document.getElementById('sliders')
   const colorColumns = [
     document.getElementById('redColumn'),
     document.getElementById('greenColumn'),
@@ -54,20 +59,21 @@ window.onload = () => {
   })
   if (fileInput.value) { csz.importCSV(fileInput.files[0]) }
 
-  // adjust simulation speed
-  speedSlider.addEventListener('input', (event) => {
-    csz.speed = Math.pow(event.target.value, 2) * speedMultiplier
-    //csz.speed = event.target.value * speedMultiplier
-  })
-  speedSlider.dispatchEvent(new Event('input'))
-
-  // adjust particle antigravity
-  const antigravitySlider = document.getElementById('antigravitySlider')
-  antigravitySlider.addEventListener('input', (event) => {
-    csz.antigravity = Math.pow(event.target.value, 2) * gravityMultiplier
-    //csz.antigravity = event.target.value * gravityMultiplier
-  })
-  antigravitySlider.dispatchEvent(new Event('input'))
+  // adjust sliders
+  const sliderSteps = 1000
+  for (let [key, [start, set]] of Object.entries(sliders)) {
+    let group = document.createElement('p')
+    group.innerHTML = `${key} <input type="range" id="${key}Slider" min="1" />`
+    slidersElem.appendChild(group)
+    // listen for changes
+    let slider = document.getElementById(`${key}Slider`)
+    slider.value = localStorage.getItem(`${key}Slider`) || start * sliderSteps
+    slider.addEventListener('input', (event) => {
+      localStorage.setItem(`${key}Slider`, event.target.value)
+      set(event.target.value / sliderSteps)
+    })
+    slider.dispatchEvent(new Event('input'))
+  }
 
   // color mapping
   csz.onReady = () => {
@@ -122,10 +128,8 @@ window.onload = () => {
 
 <!-- HTML -->
 <body>
-  <h1>TODO: learn how to simulate neighbor spaces for physics calculations</h1>
   <input type="file" id="fileInput" />
-  <p>Speed <input type="range" id="speedSlider" min="1" /></p>
-  <p>Gravity <input type="range" id="antigravitySlider" min="1" /></p>
+  <div id="sliders"></div>
   <p>Red <select id="redColumn"></select></p>
   <p>Green <select id="greenColumn"></select></p>
   <p>Blue <select id="blueColumn"></select></p>

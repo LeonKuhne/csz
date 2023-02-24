@@ -10,13 +10,15 @@ class Util {
   }
 
   // euclidean distance
-  static distance(a, b) {
-    return Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
+  static distance(a, b, offset=[0, 0]) {
+    return Math.sqrt(
+      (b[0] + offset[0] - a[0]) ** 2 +
+      (b[1] + offset[1] - a[1]) ** 2)
   }
 
   // radial direction
-  static direction(a, b) {
-    return Math.atan2(b[1] - a[1], b[0] - a[0])
+  static direction(a, b, offset=[0, 0]) {
+    return Math.atan2(b[1] + offset[1] - a[1], b[0] + offset[0] - a[0])
   }
 
   // any list to 0-1 vector
@@ -69,7 +71,10 @@ class CSZ {
     this.particleSize = 10
     this.maxDelta = 0.01 // dampening factor
     this.antigravity = 0.00001 // particle repulsion force
-    this.wallRepel = 0.000001 // wall repulsion force
+    this.wrap = false
+    this.spaceDepth = 0
+    this.centerGravity = 0.0001
+    this.batchSize = 100
   }
 
   // assumes header line exists
@@ -147,47 +152,63 @@ class CSZ {
   // NOTE might be able to do this with dot product (or something faster)
   tick() {
     // compute deltas
-    let deltas = []
-    for (let i = 0; i < this.particles.length; i++) {
+    let deltas = {}
+    // random i, random j
+    const rand = () => Math.floor(Math.random() * this.particles.length)
+    for (let batch = 0; batch < this.batchSize; batch++) {
+      let [i, j] = [rand(), rand()]
+      if (i == j) { continue }
+      if (deltas[i] == null) { deltas[i] = [0, 0] }
+      if (deltas[j] == null) { deltas[j] = [0, 0] }
       let particleA = this.particles[i]
-      for (let j = i + 1; j < this.particles.length; j++) {
-        if (deltas[j] == null) { deltas[j] = [0, 0] }
-        if (deltas[i] == null) { deltas[i] = [0, 0] }
-        // insert/add delta
-        let particleB = this.particles[j]
-        let spin = this.react(particleA, particleB)
-        // distance and direction
-        let dist = Util.distance(particleA.pos, particleB.pos)
-        let dir = Util.direction(particleA.pos, particleB.pos)
-        // apply forces
-        let delta = (1 / dist) * (spin + this.antigravity)
-        // clip to -this.maxDelta, this.maxDelta
-        if (delta > this.maxDelta) { delta = this.maxDelta }
-        if (delta < -this.maxDelta) { delta = -this.maxDelta }
-        // component distances
-        let distX = Math.cos(dir) * delta
-        let distY = Math.sin(dir) * delta
-        deltas[i][0] -= distX
-        deltas[i][1] -= distY
-        deltas[j][0] += distX
-        deltas[j][1] += distY
+      let particleB = this.particles[j]
+
+      // loop surrounding spaces
+      for (let x = -this.spaceDepth; x <= this.spaceDepth; x++) {
+        for (let y = -this.spaceDepth; y <= this.spaceDepth; y++) {
+          // compute deltas
+          let [distX, distY] = this.attract(particleA, particleB, [x, y])
+          deltas[i][0] -= distX
+          deltas[i][1] -= distY
+        }
       }
     }
 
     // apply deltas
-    for (let i = 0; i < this.particles.length; i++) {
+    for (let [i, delta] of Object.entries(deltas)) {
       let particle = this.particles[i]
-      let [x, y] = deltas[i]
+      let [x, y] = delta
       // add delta
       particle.pos[0] += x * this.speed
       particle.pos[1] += y * this.speed
-      // provide walls
-      let apply = (pos) => Util.collideBounds(
-        pos + Util.wallForce(pos) * this.wallRepel
-      )
-      particle.pos[0] = apply(particle.pos[0])
-      particle.pos[1] = apply(particle.pos[1])
+      // border type
+      if (this.wrap == true) {
+        particle.pos[0] = Util.wrap(particle.pos[0], 1)
+        particle.pos[1] = Util.wrap(particle.pos[1], 1)
+      } else {
+        particle.pos[0] = Util.collideBounds(particle.pos[0])
+        particle.pos[1] = Util.collideBounds(particle.pos[1])
+      }
     }
+  }
+
+  attract(particleA, particleB, space=[0, 0]) {
+    let spin = this.react(particleA, particleB)
+    // attract to particle
+    let dist = Util.distance(particleA.pos, particleB.pos, space)
+    let dir = Util.direction(particleA.pos, particleB.pos, space)
+    let delta = (1 / dist) * (spin + this.antigravity)
+    // attract towards center
+    let distToCenter = Util.distance(particleA.pos, [0.5, 0.5], space)
+    let dirToCenter = Util.direction(particleA.pos, [0.5, 0.5], space)
+    let centerDelta = distToCenter ** 2 * this.centerGravity
+    // clip to -this.maxDelta, this.maxDelta
+    if (delta > this.maxDelta) { delta = this.maxDelta }
+    if (delta < -this.maxDelta) { delta = -this.maxDelta }
+    // component distances
+    let distX = Math.cos(dir) * delta - Math.cos(dirToCenter) * centerDelta
+    let distY = Math.sin(dir) * delta - Math.sin(dirToCenter) * centerDelta
+    return [distX, distY]
   }
 
   colorColumn(column, rgbIdx) {
