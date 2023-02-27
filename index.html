@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>C,S,Visualize</title>
+<title>csz</title>
 <meta charset="utf-8" />
 <meta name="description" content="look at me">
 
@@ -21,20 +21,25 @@ canvas {
 </style>
 
 <!-- JS -->
-<script src="src/csz.js"></script>
-<script>
+<script type="module">
+import { CSZ } from './src/csz.js'
 window.onload = () => {
-  const csz = new CSZ()
+  const canvas = document.querySelector('#canvas')
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
 
   // config
-  const fps = 60 // render rate
-  const tps = 1000 // tick rate
+  const fps = 60
+  const tps = 1000
   const speedMultiplier = 1
   const gravityMultiplier = 1000
   const centerGravityMultiplier = 0.01
+
+  // csz 
+  const csz = new CSZ(canvas, fps, tps)
   csz.wrap = false
   csz.spaceDepth = 10
-  csz.batchSize = 100 // number of particles to render per frame
+  csz.batchSize = 100 // number of particles to draw per frame
 
   // 0-1 sliders
   // TODO
@@ -102,26 +107,8 @@ window.onload = () => {
     }
   }
 
-  // render
-  const canvas = document.querySelector('#canvas')
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
-  const ctx = canvas.getContext('2d')
-  const renderDelay = 1000 / fps 
-  const render = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    csz.render(ctx)
-    setTimeout(() => { requestAnimationFrame(render) }, renderDelay)
-  }
-  requestAnimationFrame(render)
-
-  // run
-  const tickDelay = 1000 / tps
-  const run = () => {
-    csz.tick()
-    setTimeout(() => run(), tickDelay)
-  }
-  run()
+  // start csz 
+  csz.run()
 }
 </script>
 </head>

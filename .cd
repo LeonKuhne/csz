@@ -1,1 +1,8 @@
+#!/bin/bash
 title "visualize any csv file with columns"
+
+help .cd | indent
+
+function serve() {
+  python -m http.server 8000
+}
