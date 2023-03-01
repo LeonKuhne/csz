@@ -1,22 +1,15 @@
-import { Physics } from "./physics/physics.js";
+import { Engine } from "./physics/engine.js";
 import { Util } from "./util.js";
 
 export class CSZ {
-  constructor(canvas, speed = 0.0001) {
-    this.physics = new Physics(canvas)
+  constructor(canvas, fps = 60, tps = 60) {
+    this.engine = new Engine(canvas, fps, tps)
     this.dimensions = []
     this.data = []
     this.columnMins = []
     this.columnRanges = []
-    this.speed = speed
     this.onReady = () => {}
-    this.color = [() => 0, () => 0, () => 0]
-    this.maxDelta = 0.01 // dampening factor
-    this.antigravity = 0.00001 // particle repulsion force
-    this.wrap = false
-    this.spaceDepth = 0
-    this.centerGravity = 0.0001
-    this.batchSize = 100
+    this.columnColors = []
   }
 
   // assumes header line exists
@@ -50,15 +43,15 @@ export class CSZ {
     }
 
     // add particle
-    let spins = Util.encode(list)
-    this.physics.add(spins)
+    let values = Util.encode(list)
+    this.engine.add(values)
     this.data.push(list)
   }
 
   prepare() {
     // determine column spin ranges
     for (let i = 0; i < this.dimensions.length; i++) {
-      for (let particle of this.physics.particles) {
+      for (let particle of this.engine.particles) {
         let spins = particle.spin
         let min = this.columnMins[i]
         let maxRange = this.columnRanges[i]
@@ -77,11 +70,10 @@ export class CSZ {
       let range = this.columnRanges[i]
       if (range == 0) { continue }
       let min = this.columnMins[i]
-      for (let particle of this.physics.particles) {
+      for (let particle of this.engine.particles) {
         // normalize spin to range 0, 1
         let spin = (particle.spin[i] - min) / range
-        // adjust range to -1, 1
-        particle.spin[i] = spin * 2 - 1
+        particle.spin[i] = spin
       }
     }
     // callback
@@ -94,10 +86,17 @@ export class CSZ {
       console.error("column not found", columnIdx, column, this.dimensions)
       return
     }
-    this.color[rgbIdx] = (particle) => (particle.spin[columnIdx] + 1) / 2 * 255
+    this.columnColors[rgbIdx] = columnIdx
+    this.engine.color = (particle) => {
+      let color = []
+      for (let i = 0; i < 3; i++) {
+        const colorValue = i < this.columnColors.length 
+          ? particle.spin[this.columnColors[i]] : 0
+        color.push(colorValue * 255)
+      }
+      return color
+    }
   }
 
-  run() {
-    this.physics.run()
-  }
+  run() { this.engine.run() }
 }

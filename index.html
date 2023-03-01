@@ -9,14 +9,22 @@
 <style>
 html, body {
   margin: 0;
+} body {
   line-height: 0;
   height: 100%;
-}
-canvas {
+  color: #777;
+  position: absolute;
+  background: black;
+} .content {
+  opacity: 0.1;
+} .content:hover {
+  opacity: 1;
+} canvas {
   position: absolute;
   top: 0;
   left: 0;
   z-index: -1;
+  background: black;
 }
 </style>
 
@@ -31,22 +39,22 @@ window.onload = () => {
   // config
   const fps = 60
   const tps = 1000
-  const speedMultiplier = 1
-  const gravityMultiplier = 1000
-  const centerGravityMultiplier = 0.01
+  const speedMultiplier = 0.1
+  const gravityMultiplier = 50
+  const centerGravityMultiplier = 0
 
   // csz 
-  const csz = new CSZ(canvas, fps, tps)
-  csz.wrap = false
-  csz.spaceDepth = 10
-  csz.batchSize = 100 // number of particles to draw per frame
+  window.csz = new CSZ(canvas, fps, tps)
+  csz.engine.wrap = false
+  csz.engine.spaceDepth = 0
+  csz.engine.batchSize = 100 // number of particles to draw per frame
 
   // 0-1 sliders
   // TODO
   const sliders = {
-    Speed: [csz.speed, (val) => csz.speed = Math.pow(val, 2) * speedMultiplier],
-    Gravity: [csz.antigravity, (val) => csz.antigravity = Math.pow(val, 2) * gravityMultiplier],
-    Spread: [csz.centerGravity, (val) => csz.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
+    "Simulation Speed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
+    "Particle Gravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = Math.pow(1-val, 2) * gravityMultiplier],
+    "Particle Spread": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(1-val, 2) * centerGravityMultiplier],
   }
 
   // componets
@@ -91,7 +99,6 @@ window.onload = () => {
         elem.appendChild(option)
       }
     }
-
     // map colors
     for (let i = 0; i < colorColumns.length; i++) {
       let elem = colorColumns[i]
@@ -105,7 +112,6 @@ window.onload = () => {
       elem.selectedIndex = i
       elem.dispatchEvent(new Event('change'))
     }
-
     // start csz 
     csz.run()
   }
@@ -115,12 +121,13 @@ window.onload = () => {
 
 <!-- HTML -->
 <body>
-  <input type="file" id="fileInput" />
-  <div id="sliders"></div>
-  <p>Red <select id="redColumn"></select></p>
-  <p>Green <select id="greenColumn"></select></p>
-  <p>Blue <select id="blueColumn"></select></p>
+  <div class="content">
+    <input type="file" id="fileInput" />
+    <div id="sliders"></div>
+    <p>Red <select id="redColumn"></select></p>
+    <p>Green <select id="greenColumn"></select></p>
+    <p>Blue <select id="blueColumn"></select></p>
+  </div>
   <canvas id="canvas"></canvas>
-
 </body>
 <html>

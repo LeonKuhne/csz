@@ -2,17 +2,36 @@ export class Position {
   constructor(pos = []) {
     this.pos = pos;
   }
+
   // euclidean distance
   distance(other) {
     return Math.sqrt(
-      (other.pos[0] - this.pos[0]) ** 2 +
-      (other.pos[1] - this.pos[1]) ** 2);
+      (other.x - this.x) ** 2 +
+      (other.y - this.y) ** 2)
   }
+
   direction(other) {
-    return Math.atan2(other.pos[1] - this.pos[1], other.pos[0] - this.pos[0]);
+    return Math.atan2(other.y - this.y, other.x - this.x)
   }
-  move(offset) {
-    this.pos[0] += offset[0];
-    this.pos[1] += offset[1];
+
+  slide(offset) {
+    for (let i = 0; i < this.pos.length; i++) {
+      this.pos[i] += offset.pos[i]
+    }
+    return this
   }
+
+  scale(factor) {
+    for (let i = 0; i < this.pos.length; i++) {
+      this.pos[i] *= factor
+    }
+    return this
+  }
+
+  copy() {
+    return new Position(this.pos)
+  }
+
+  get x() { return this.pos[0] }
+  get y() { return this.pos[1] }
 }

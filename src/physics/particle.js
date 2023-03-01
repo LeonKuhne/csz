@@ -1,46 +1,65 @@
-import { Position } from './position.js';
+import { Position } from './position.js'
 
 export class Particle extends Position {
+  // spin can be either a number or a list of numbers
+  // pos only 2 dimensions currently supported
   constructor(
-    pos = new Position([Math.random(), Math.random()]),
-    spin = []
+    spin = 0.5,
+    pos = [Math.random(), Math.random()],
   ) {
-    super(pos);
-    this.spin = spin;
+    super(pos)
+    this.spin = spin
+    this.size = 10
+    this.maxDelta = 0.1
   }
 
-  draw(ctx, w, h, colors=(_) => [0,0,0]) {
-    const color = colors(this);
-    ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  draw(ctx, w, h, color=(_) => [150,150,150]) {
+    ctx.fillStyle = `rgb(${color(this).join(',')})`
     ctx.fillRect(
-      this.pos[0] * (w - this.particleSize),
-      this.pos[1] * (h - this.particleSize),
-      this.particleSize, this.particleSize);
+      this.x * (w - this.size),
+      this.y * (h - this.size),
+      this.size, this.size)
   }
 
-  // average spin delta from -1 to 1
-  delta(other) {
-    let sum = 0;
-    for (let i = 0; i < this.dimensions.length; i++) {
-      sum += ((this.spin[i] - other.spin[i]) / 2) ** 2;
-      //spinDelta += (Math.abs(this.spin[i] - other.spin[i]) / 2
+  // compute delta of spin between two spin values
+  static spinAttraction(a, b) {
+    return b - a
+    //return ((this.spin[i] - other.spin[i]) / 2) ** 2
+    //return (Math.abs(this.spin[i] - other.spin[i]) / 2
+  }
+
+  static avgSpinDelta(listA, listB) {
+    let sum = 0
+    for (let i = 0; i < listA.length; i++) {
+      sum += Particle.spinAttraction(listA[i], listB[i])
     }
-    return sum / this.dimensions.length * 2 - 1;
+    return sum / listA.length
   }
 
-  // euclidean distance
-  distance(other) {
-    return Math.sqrt(
-      (other.pos[0] - this.pos[0]) ** 2 +
-      (other.pos[1] - this.pos[1]) ** 2);
+  // aka. repulsion/attraction force (-1, 1)
+  spinDelta(other) { 
+    let sum = 0
+    for (let i = 0; i < this.spin.length; i++) {
+      sum += Particle.spinAttraction(this.spin[i], other.spin[i])
+    }
+    return sum / this.spin.length
   }
 
-  move(offset) {
-    this.pos[0] += offset[0];
-    this.pos[1] += offset[1];
+  wrap(range=1) {
+    for (let i = 0; i < this.pos.length; i++) {
+      if (this.pos[i] < 0) { this.pos[i] += range }
+      else { this.pos[i] %= range }
+    }
   }
 
-  clone() {
-    return new Particle(this.pos, this.spin);
+  collideBounds(range=1) {
+    for (let i = 0; i < this.pos.length; i++) {
+      if (this.pos[i] < 0) { this.pos[i] = 0 }
+      else if (this.pos[i] > range) { this.pos[i] = range }
+    }
+  }
+
+  copy() {
+    return new Particle(this.spin, this.pos)
   }
 }
