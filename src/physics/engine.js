@@ -16,6 +16,7 @@ export class Engine {
     this.centerGravity = 0.0
     this.color = (_) => [255,255,255] // color particles
     this.antigravity = 0.00001
+    this.center = new Particle(0, [0.5, 0.5])
   }
 
   add(spin) {
@@ -46,30 +47,55 @@ export class Engine {
     }
   }
 
-  // attract similar particles, repel opposite
-  // NOTE might be able to do this with dot product (or something faster)
-  tick() {
-    // compute deltas
+  applyForces(pos, i, j) {
+    return pos
+      .slide(new Vector(this.particles[i], this.particles[j])
+        .attract(this.spaceDepth)
+        .gravitate(this.antigravity)
+        .delta
+      )
+      .slide(new Vector(this.particles[i], this.center)
+        .gravitate(this.centerGravity)
+        .delta
+      )
+  }
+
+  runBatch(size) {
     let deltas = {}
-    const center = new Particle(0, [0.5, 0.5])
-    // random i, random j
     const rand = () => Math.floor(Math.random() * this.particles.length)
-    for (let batch = 0; batch < this.batchSize; batch++) {
+    for (let batch = 0; batch < size; batch++) {
       let [i, j] = [rand(), rand()]
       if (i == j) { continue }
       if (deltas[i] == null) { deltas[i] = new Position([0, 0]) }
       if (deltas[j] == null) { deltas[j] = new Position([0, 0]) }
-      deltas[i]
-        .slide(new Vector(this.particles[i], this.particles[j])
-          .attract(this.spaceDepth)
-          .gravitate(this.antigravity)
-          .delta
-        )
-        .slide(new Vector(this.particles[i], center)
-          .gravitate(this.centerGravity)
-          .delta
-        )
+      deltas[i] = this.applyForces(deltas[i], i, j)
+      deltas[j] = this.applyForces(deltas[j].scale(-1), i, j)
     }
+    return deltas
+  }
+
+  runOrdered() {
+    // setup deltas
+    let deltas = {}
+    for (let i = 0; i < this.particles.length; i++) {
+      deltas[i] = new Position([0, 0])
+    }
+    // fill deltas
+    for (let i = 0; i < this.particles.length; i++) {
+      for (let j = i + 1; j < this.particles.length; j++) {
+        deltas[i] = this.applyForces(deltas[i], i, j)
+        deltas[j] = this.applyForces(deltas[j].scale(-1), i, j)
+      }
+    }
+    return deltas
+  }
+
+
+  tick() {
+    const deltas = this.batchSize == 0 
+      ? this.runOrdered()
+      : this.runBatch(this.batchSize)
+
     // move
     for (let [i, delta] of Object.entries(deltas)) {
       let particle = this.particles[i]
