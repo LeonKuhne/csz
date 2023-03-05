@@ -17,7 +17,7 @@ export class Vector {
 
   gravitate(strength) {
     const distance = this.start.distance(this.end)
-    const direction = this.start.direction(this.end)
+    const direction = this.end.direction(this.start)
     const gravity = strength * (1 - distance ** 2)
     this.add(gravity, direction)
     return this

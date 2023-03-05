@@ -23,17 +23,10 @@ export class Particle extends Position {
 
   // compute delta of spin between two spin values
   static spinAttraction(a, b) {
-    return b - a
+    //return b - a
+    return a > b ? (a-b)**2 : (b-a)**2
     //return ((this.spin[i] - other.spin[i]) / 2) ** 2
     //return (Math.abs(this.spin[i] - other.spin[i]) / 2
-  }
-
-  static avgSpinDelta(listA, listB) {
-    let sum = 0
-    for (let i = 0; i < listA.length; i++) {
-      sum += Particle.spinAttraction(listA[i], listB[i])
-    }
-    return sum / listA.length
   }
 
   // aka. repulsion/attraction force (-1, 1)

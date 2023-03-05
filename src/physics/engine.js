@@ -82,7 +82,8 @@ export class Engine {
     }
     // fill deltas
     for (let i = 0; i < this.particles.length; i++) {
-      for (let j = i + 1; j < this.particles.length; j++) {
+      for (let j = 0; j < this.particles.length; j++) {
+        if (i == j) { continue }
         deltas[i] = this.applyForces(deltas[i], i, j)
         deltas[j] = this.applyForces(deltas[j].scale(-1), i, j)
       }
@@ -98,6 +99,8 @@ export class Engine {
 
     // move
     for (let [i, delta] of Object.entries(deltas)) {
+      /* print out deltas */
+      console.log(delta)
       let particle = this.particles[i]
         .slide(delta.scale(this.speed))
       this.wrap ? particle.wrap() : particle.collideBounds()
