@@ -39,9 +39,9 @@ window.onload = () => {
   // config
   const fps = 60
   const tps = 1000
-  const speedMultiplier = 0.1
+  const speedMultiplier = 0.001
   const gravityMultiplier = 0.1
-  const centerGravityMultiplier = 0.1
+  const centerGravityMultiplier = 0.000001
 
   // csz 
   window.csz = new CSZ(canvas, fps, tps)
@@ -53,8 +53,8 @@ window.onload = () => {
   const sliders = {
     "SimulationSpeed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
     "ParticleGravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = val * gravityMultiplier],
-    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val],
-    "ParticleSpread": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(1-val, 2) * centerGravityMultiplier],
+    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val * 2],
+    "CenterGravity": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
   }
 
   // componets

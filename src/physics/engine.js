@@ -102,6 +102,11 @@ export class Engine {
 
     // move
     for (let [i, delta] of Object.entries(deltas)) {
+      // verify delta not nan
+      if (delta.x != delta.x || delta.y != delta.y) {
+        console.log('nan', delta)
+        continue
+      }
       let particle = this.particles[i]
         .slide(delta.scale(this.speed))
       this.wrap ? particle.wrap() : particle.collideBounds()
