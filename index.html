@@ -44,7 +44,8 @@ window.onload = () => {
   const centerGravityMultiplier = 0.000001
 
   // csz 
-  window.csz = new CSZ(canvas, fps, tps)
+  var csz = new CSZ(canvas, fps, tps)
+  window.csz = csz
   csz.engine.wrap = false
   csz.engine.spaceDepth = 0
   csz.engine.batchSize = 0 // number of particles to draw per frame
@@ -65,10 +66,17 @@ window.onload = () => {
     document.getElementById('greenColumn'),
     document.getElementById('blueColumn')
   ]
+  const nameElem = document.getElementById('name')
+
+  // update project name
+  csz.onUpdate = (data) => {
+    nameElem.innerHTML = data.name
+  }
 
   // handle file imports
   fileInput.addEventListener('change', (event) => {
     csz.importCSV(event.target.files[0])
+
   })
   if (fileInput.value) { csz.importCSV(fileInput.files[0]) }
 
@@ -88,6 +96,12 @@ window.onload = () => {
     })
     slider.dispatchEvent(new Event('input'))
   }
+
+  // load example
+  document.getElementById('sample').addEventListener('click', () => {
+    // load file from url
+    csz.importURL('examples/test_lowess_simple.csv')
+  })
 
   // color mapping
   csz.onReady = () => {
@@ -123,6 +137,8 @@ window.onload = () => {
 <!-- HTML -->
 <body>
   <div class="content">
+    <h1>csz</h1><h2 id="name"></h2>
+    <input type="button" id="sample" value="Load example" />
     <input type="file" id="fileInput" />
     <div id="sliders"></div>
     <p>Red <select id="redColumn"></select></p>

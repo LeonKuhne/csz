@@ -10,6 +10,7 @@ export class CSZ {
     this.columnRanges = []
     this.onReady = () => {}
     this.columnColors = []
+    this.onUpdate = () => {}
   }
 
   // assumes header line exists
@@ -17,19 +18,34 @@ export class CSZ {
     console.info("importing csv", file);
     const reader = new FileReader();
     reader.onload = () => {
-      let lines = reader.result.split("\n");
-      // parse headers
-      this.dimensions = lines.shift().split(",");
-      this.columnMins = Array(this.dimensions.length).fill(null);
-      this.columnRanges = Array(this.dimensions.length).fill(null);
-      // parse data
-      for (let line of lines) {
-        this.addLine(line)
-      }
-      // normalize data
-      this.prepare();
+      this.onUpdate({name: file.name})
+      this.importText(reader.result)
     }
     reader.readAsText(file);
+  }
+
+  importURL(url) {
+    console.info("importing url", url);
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        this.onUpdate({name: url})
+        this.importText(text)
+      })
+  }
+
+  importText(text) {
+    let lines = text.split("\n");
+    // parse headers
+    this.dimensions = lines.shift().split(",");
+    this.columnMins = Array(this.dimensions.length).fill(null);
+    this.columnRanges = Array(this.dimensions.length).fill(null);
+    // parse data
+    for (let line of lines) {
+      this.addLine(line)
+    }
+    // normalize data
+    this.prepare();
   }
 
   addLine(line) {
