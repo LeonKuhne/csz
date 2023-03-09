@@ -15,7 +15,7 @@ export class Engine {
     this.wrap = false
     this.centerGravity = 0.0
     this.color = (_) => [255,255,255] // color particles
-    this.antigravity = 0.00001
+    this.antigravity = 0.0001
     this.center = new Particle(0, [0.5, 0.5])
   }
 
@@ -51,11 +51,11 @@ export class Engine {
     return pos
       .slide(new Vector(this.particles[i], this.particles[j])
         .attract(this.spaceDepth)
-        .gravitate(this.antigravity)
+        //.gravitate(this.antigravity)
         .delta
       )
       .slide(new Vector(this.particles[i], this.center)
-        .gravitate(this.centerGravity)
+        //.gravitate(this.centerGravity)
         .delta
       )
   }
@@ -85,7 +85,7 @@ export class Engine {
       for (let j = 0; j < this.particles.length; j++) {
         if (i == j) { continue }
         deltas[i] = this.applyForces(deltas[i], i, j)
-        deltas[j] = this.applyForces(deltas[j].scale(-1), i, j)
+        //deltas[j] = this.applyForces(deltas[j].scale(-1), i, j)
       }
     }
     return deltas
