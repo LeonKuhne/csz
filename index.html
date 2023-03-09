@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>C,S,Visualize</title>
+<title>csz</title>
 <meta charset="utf-8" />
 <meta name="description" content="look at me">
 
@@ -9,39 +9,52 @@
 <style>
 html, body {
   margin: 0;
+} body {
   line-height: 0;
   height: 100%;
-}
-canvas {
+  color: #777;
+  position: absolute;
+  background: black;
+} .content {
+  opacity: 0.1;
+} .content:hover {
+  opacity: 1;
+} canvas {
   position: absolute;
   top: 0;
   left: 0;
   z-index: -1;
+  background: black;
 }
 </style>
 
 <!-- JS -->
-<script src="src/csz.js"></script>
-<script>
+<script type="module">
+import { CSZ } from './src/csz.js'
 window.onload = () => {
-  const csz = new CSZ()
+  const canvas = document.querySelector('#canvas')
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
 
   // config
-  const fps = 60 // render rate
-  const tps = 1000 // tick rate
-  const speedMultiplier = 1
-  const gravityMultiplier = 1000
-  const centerGravityMultiplier = 0.01
-  csz.wrap = false
-  csz.spaceDepth = 10
-  csz.batchSize = 100 // number of particles to render per frame
+  const fps = 60
+  const tps = 1000
+  const speedMultiplier = 0.1
+  const gravityMultiplier = 0.1
+  const centerGravityMultiplier = 0.1
+
+  // csz 
+  window.csz = new CSZ(canvas, fps, tps)
+  csz.engine.wrap = false
+  csz.engine.spaceDepth = 0
+  csz.engine.batchSize = 0 // number of particles to draw per frame
 
   // 0-1 sliders
-  // TODO
   const sliders = {
-    Speed: [csz.speed, (val) => csz.speed = Math.pow(val, 2) * speedMultiplier],
-    Gravity: [csz.antigravity, (val) => csz.antigravity = Math.pow(val, 2) * gravityMultiplier],
-    Spread: [csz.centerGravity, (val) => csz.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
+    "SimulationSpeed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
+    "ParticleGravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = val * gravityMultiplier],
+    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val],
+    "ParticleSpread": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(1-val, 2) * centerGravityMultiplier],
   }
 
   // componets
@@ -67,6 +80,7 @@ window.onload = () => {
     slidersElem.appendChild(group)
     // listen for changes
     let slider = document.getElementById(`${key}Slider`)
+    slider.max = sliderSteps
     slider.value = localStorage.getItem(`${key}Slider`) || start * sliderSteps
     slider.addEventListener('input', (event) => {
       localStorage.setItem(`${key}Slider`, event.target.value)
@@ -86,7 +100,6 @@ window.onload = () => {
         elem.appendChild(option)
       }
     }
-
     // map colors
     for (let i = 0; i < colorColumns.length; i++) {
       let elem = colorColumns[i]
@@ -100,40 +113,22 @@ window.onload = () => {
       elem.selectedIndex = i
       elem.dispatchEvent(new Event('change'))
     }
+    // start csz 
+    csz.run()
   }
-
-  // render
-  const canvas = document.querySelector('#canvas')
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
-  const ctx = canvas.getContext('2d')
-  const renderDelay = 1000 / fps 
-  const render = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    csz.render(ctx)
-    setTimeout(() => { requestAnimationFrame(render) }, renderDelay)
-  }
-  requestAnimationFrame(render)
-
-  // run
-  const tickDelay = 1000 / tps
-  const run = () => {
-    csz.tick()
-    setTimeout(() => run(), tickDelay)
-  }
-  run()
 }
 </script>
 </head>
 
 <!-- HTML -->
 <body>
-  <input type="file" id="fileInput" />
-  <div id="sliders"></div>
-  <p>Red <select id="redColumn"></select></p>
-  <p>Green <select id="greenColumn"></select></p>
-  <p>Blue <select id="blueColumn"></select></p>
+  <div class="content">
+    <input type="file" id="fileInput" />
+    <div id="sliders"></div>
+    <p>Red <select id="redColumn"></select></p>
+    <p>Green <select id="greenColumn"></select></p>
+    <p>Blue <select id="blueColumn"></select></p>
+  </div>
   <canvas id="canvas"></canvas>
-
 </body>
 <html>
