@@ -1,7 +1,7 @@
 import { Position } from "./position.js"
 
 export class Vector {
-  constructor(start, end) {
+  constructor(start, end, maxDelta=0.1) {
     this.start = start
     this.end = end
     this.delta = new Position([0, 0])
@@ -25,6 +25,7 @@ export class Vector {
     //const gravity = strength * (1 - Math.pow(distance, 2))
     //const gravity = strength / Math.tan(distance - Math.PI / 2 - .5)
     //const gravity = strength * (1 - Math.pow(distance, radius))
+    // check if gravity is nan
     if (negate) distance = -distance
     this.add(-gravity, direction)
     return this
