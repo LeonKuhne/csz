@@ -68,11 +68,6 @@ window.onload = () => {
   ]
   const nameElem = document.getElementById('name')
 
-  // update project name
-  csz.onUpdate = (data) => {
-    nameElem.innerHTML = data.name
-  }
-
   // handle file imports
   fileInput.addEventListener('change', (event) => {
     csz.importCSV(event.target.files[0])
@@ -103,9 +98,16 @@ window.onload = () => {
     csz.importURL('examples/test_lowess_simple.csv')
   })
 
-  // color mapping
+  //
+  // CSZ EVENTS
+
+  csz.onUpdate = (data) => {
+    // update project name
+    nameElem.innerHTML = data.name
+  }
+
   csz.onReady = () => {
-    // create options
+    // color mapping (create options) 
     for (let elem of colorColumns) {
       for (let column of csz.dimensions) {
         let option = document.createElement('option')
@@ -127,6 +129,7 @@ window.onload = () => {
       elem.selectedIndex = i
       elem.dispatchEvent(new Event('change'))
     }
+
     // start csz 
     csz.run()
   }
