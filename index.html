@@ -40,7 +40,7 @@ window.onload = () => {
   const fps = 60
   const tps = 1000
   const speedMultiplier = 0.1
-  const gravityMultiplier = 1000
+  const gravityMultiplier = 10
   const centerGravityMultiplier = 100
 
   // csz 
@@ -50,10 +50,9 @@ window.onload = () => {
   csz.engine.batchSize = 0 // number of particles to draw per frame
 
   // 0-1 sliders
-  // TODO
   const sliders = {
     "Simulation Speed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
-    "Particle Gravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = Math.pow(1-val, 2) * gravityMultiplier],
+    "Particle Gravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = val * gravityMultiplier],
     "Particle Spread": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(1-val, 2) * centerGravityMultiplier],
   }
 

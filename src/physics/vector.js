@@ -17,9 +17,12 @@ export class Vector {
 
   gravitate(strength) {
     const distance = this.start.distance(this.end)
-    const direction = this.end.direction(this.start)
-    const gravity = strength * (1 - distance ** 2)
-    this.add(gravity, direction)
+    const direction = this.start.direction(this.end)
+    //const gravity = strength * (1 - distance ** 2)
+    //const gravity = strength / Math.tan(distance - Math.PI / 2 - .5)
+    //const gravity = strength * (1 - distance ** radius)
+    const gravity = strength / distance
+    this.add(-gravity, direction)
     return this
   }
 
@@ -31,7 +34,7 @@ export class Vector {
         const distance = this.start.distance(space)
         const direction = this.start.direction(space)
         const repulsionForce = 1 - this.start.spinDelta(space) * 2
-        const delta = (1-distance)**2 * repulsionForce
+        const delta = (1 - distance) ** 2 * repulsionForce
         this.add(delta, direction)
       }
     }

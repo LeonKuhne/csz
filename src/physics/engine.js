@@ -15,7 +15,8 @@ export class Engine {
     this.wrap = false
     this.centerGravity = 0.0
     this.color = (_) => [255,255,255] // color particles
-    this.antigravity = 0.0001
+    this.antigravity = 1
+    this.particleRadius = 1
     this.center = new Particle(0, [0.5, 0.5])
   }
 
@@ -51,7 +52,7 @@ export class Engine {
     return pos
       .slide(new Vector(this.particles[i], this.particles[j])
         .attract(this.spaceDepth)
-        //.gravitate(this.antigravity)
+        .gravitate(this.antigravity, this.particleRadius)
         .delta
       )
       .slide(new Vector(this.particles[i], this.center)
@@ -99,8 +100,6 @@ export class Engine {
 
     // move
     for (let [i, delta] of Object.entries(deltas)) {
-      /* print out deltas */
-      console.log(delta)
       let particle = this.particles[i]
         .slide(delta.scale(this.speed))
       this.wrap ? particle.wrap() : particle.collideBounds()
