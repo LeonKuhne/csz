@@ -6,8 +6,8 @@ export class Position {
   // euclidean distance
   distance(other) {
     return Math.sqrt(
-      (other.x - this.x) ** 2 +
-      (other.y - this.y) ** 2)
+      Math.pow((other.x - this.x), 2) +
+      Math.pow((other.y - this.y), 2))
   }
 
   direction(other) {
@@ -17,6 +17,13 @@ export class Position {
   slide(offset) {
     for (let i = 0; i < this.pos.length; i++) {
       this.pos[i] += offset.pos[i]
+    }
+    return this
+  }
+
+  slideMany(offsets) {
+    for (let offset of offsets) {
+      this.slide(offset)
     }
     return this
   }

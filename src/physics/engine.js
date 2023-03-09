@@ -14,9 +14,9 @@ export class Engine {
     this.speed = 0.0001
     this.wrap = false
     this.centerGravity = 0.0
+    this.gravityCurve = 1
     this.color = (_) => [255,255,255] // color particles
     this.antigravity = 1
-    this.particleRadius = 1
     this.center = new Particle(0, [0.5, 0.5])
   }
 
@@ -50,15 +50,17 @@ export class Engine {
 
   applyForces(pos, i, j) {
     return pos
-      .slide(new Vector(this.particles[i], this.particles[j])
-        .attract(this.spaceDepth)
-        .gravitate(this.antigravity, this.particleRadius)
-        .delta
-      )
-      .slide(new Vector(this.particles[i], this.center)
-        //.gravitate(this.centerGravity)
-        .delta
-      )
+      .slideMany([
+        // attract to other particles
+        new Vector(this.particles[i], this.particles[j])
+          .attract(this.spaceDepth)
+          .gravitate(this.antigravity)
+          .delta,
+        // attract to center
+        new Vector(this.particles[i], this.center)
+          .gravitate(-this.centerGravity, this.gravityCurve)
+          .delta,
+      ])
   }
 
   runBatch(size) {

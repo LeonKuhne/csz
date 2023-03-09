@@ -15,8 +15,8 @@ export class Util {
 
   // repel from walls
   static wallForce(value) {
-    let leftForce = 1 / value ** 2;
-    let rightForce = 1 / (1 - value) ** 2;
+    let leftForce = 1 / Math.pow(value, 2);
+    let rightForce = 1 / Math.pow((1 - value), 2);
     return (leftForce - rightForce);
   }
 }
