@@ -21,12 +21,12 @@ export class Vector {
     // reverse distance if strength is negative
     let negate = strength < 0
     if (negate) strength = -strength
-    const gravity = Math.pow((strength / distance), curve)
+    let gravity = Math.pow((strength / distance), curve)
     //const gravity = strength * (1 - Math.pow(distance, 2))
     //const gravity = strength / Math.tan(distance - Math.PI / 2 - .5)
     //const gravity = strength * (1 - Math.pow(distance, radius))
     // check if gravity is nan
-    if (negate) distance = -distance
+    if (negate) gravity = -gravity
     this.add(-gravity, direction)
     return this
   }

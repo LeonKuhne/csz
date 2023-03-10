@@ -39,12 +39,13 @@ window.onload = () => {
   // config
   const fps = 60
   const tps = 1000
-  const speedMultiplier = 0.1
+  const speedMultiplier = 0.001
   const gravityMultiplier = 0.1
-  const centerGravityMultiplier = 0.1
+  const centerGravityMultiplier = 0.000001
 
   // csz 
-  window.csz = new CSZ(canvas, fps, tps)
+  var csz = new CSZ(canvas, fps, tps)
+  window.csz = csz
   csz.engine.wrap = false
   csz.engine.spaceDepth = 0
   csz.engine.batchSize = 0 // number of particles to draw per frame
@@ -53,8 +54,8 @@ window.onload = () => {
   const sliders = {
     "SimulationSpeed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
     "ParticleGravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = val * gravityMultiplier],
-    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val],
-    "ParticleSpread": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(1-val, 2) * centerGravityMultiplier],
+    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val * 2],
+    "CenterGravity": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
   }
 
   // componets
@@ -65,10 +66,12 @@ window.onload = () => {
     document.getElementById('greenColumn'),
     document.getElementById('blueColumn')
   ]
+  const nameElem = document.getElementById('name')
 
   // handle file imports
   fileInput.addEventListener('change', (event) => {
     csz.importCSV(event.target.files[0])
+
   })
   if (fileInput.value) { csz.importCSV(fileInput.files[0]) }
 
@@ -89,9 +92,22 @@ window.onload = () => {
     slider.dispatchEvent(new Event('input'))
   }
 
-  // color mapping
+  // load example
+  document.getElementById('sample').addEventListener('click', () => {
+    // load file from url
+    csz.importURL('examples/test_lowess_simple.csv')
+  })
+
+  //
+  // CSZ EVENTS
+
+  csz.onUpdate = (data) => {
+    // update project name
+    nameElem.innerHTML = data.name
+  }
+
   csz.onReady = () => {
-    // create options
+    // color mapping (create options) 
     for (let elem of colorColumns) {
       for (let column of csz.dimensions) {
         let option = document.createElement('option')
@@ -113,6 +129,7 @@ window.onload = () => {
       elem.selectedIndex = i
       elem.dispatchEvent(new Event('change'))
     }
+
     // start csz 
     csz.run()
   }
@@ -123,6 +140,8 @@ window.onload = () => {
 <!-- HTML -->
 <body>
   <div class="content">
+    <h1>csz</h1><h2 id="name"></h2>
+    <input type="button" id="sample" value="Load example" />
     <input type="file" id="fileInput" />
     <div id="sliders"></div>
     <p>Red <select id="redColumn"></select></p>
