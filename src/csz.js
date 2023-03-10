@@ -1,5 +1,5 @@
-import { Engine } from "./physics/engine.js";
-import { Util } from "./util.js";
+import { Engine } from "https://dot.leonk.dev/src/engine.js"
+import { Util } from "./util.js"
 
 export class CSZ {
   constructor(canvas, fps = 60, tps = 60) {
