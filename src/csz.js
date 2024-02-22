@@ -1,9 +1,15 @@
 import { Engine } from "https://dot.leonk.dev/src/engine.js"
+import { Particle } from "https://dot.leonk.dev/src/particle.js"
 import { Util } from "./util.js"
 
 export class CSZ {
-  constructor(canvas, fps = 60, tps = 60) {
+  constructor(canvas, fps = 10, tps = 60) {
     this.engine = new Engine(canvas, fps, tps)
+    this.engine.screenFill = 1/3
+    this.engine.minInteractionDistance = 1
+    this.spinCurve = 5
+    const spinFunc = Particle.SpinDelta
+    Particle.SpinDelta = (a, b) => Math.pow(spinFunc(a, b), this.spinCurve)
     this.dimensions = []
     this.data = []
     this.columnMins = []
@@ -25,13 +31,49 @@ export class CSZ {
   }
 
   importURL(url) {
-    console.info("importing url", url);
+    console.info(`importing url`, url);
     fetch(url)
       .then(response => response.text())
-      .then(text => {
+      .then(data => {
         this.onUpdate({name: url})
-        this.importText(text)
+        this.importText(data)
       })
+  }
+
+  embed(text) {
+    this.reset()
+    this.importJSONURL(`http://localhost:5000/embeddings?text=${text}`, "embeddings")
+  }
+
+  reset() {
+    // reset particles/data
+    this.engine.particles = []
+    this.data = []
+    this.dimensions = []
+  }
+
+  importJSONURL(url, key=null) {
+    console.info(`importing json url`, url)
+    fetch(url)
+      .then(response => response.json())
+      .then(data => key ? data[key] : data)
+      .then(data => {
+        if (data.length == 0) { console.error("no data found", data); return }
+        this.dimensions = Object.keys(data[0])
+        // import data
+        this.onUpdate({name: key || url})
+        data.forEach(values => this.importVector(values))
+        this.onReady()
+      })
+  }
+
+  importVector(values) {
+    // normalize values from -1,1 to 0-1 using sigmoid
+    for (let i = 0; i < values.length; i++) {
+      values[i] = 1 / (1 + Math.exp(-values[i]))
+    }
+    this.engine.add(values)
+    this.data.push(values)
   }
 
   importText(text) {
@@ -108,7 +150,7 @@ export class CSZ {
       for (let i = 0; i < 3; i++) {
         const colorValue = i < this.columnColors.length 
           ? particle.spin[this.columnColors[i]] : 0
-        color.push(colorValue * 255)
+        color.push(Math.floor(colorValue * 255))
       }
       return color
     }

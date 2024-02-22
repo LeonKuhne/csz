@@ -7,16 +7,19 @@
 
 <!-- CSS -->
 <style>
-html, body {
+:root {
+  --theme: #eee;
+} html, body {
   margin: 0;
 } body {
   line-height: 0;
   height: 100%;
-  color: #777;
+  color: var(--theme);
   position: absolute;
-  background: black;
+  background: none;
 } .content {
   opacity: 0.1;
+  color: var(--theme-bg);
 } .content:hover {
   opacity: 1;
 } canvas {
@@ -24,7 +27,20 @@ html, body {
   top: 0;
   left: 0;
   z-index: -1;
+  color: var(--theme-bg);
   background: black;
+} textarea {
+  display: block;
+  width: 100%;
+  color: var(--theme);
+} .mouse-tip {
+  position: absolute;
+  display: block;
+} .mouse-tip div {
+  line-height: 1rem;
+  min-width: max-content;
+} .hidden {
+  display: none;
 }
 </style>
 
@@ -54,8 +70,6 @@ window.onload = () => {
   const sliders = {
     "SimulationSpeed": [csz.engine.speed, (val) => csz.engine.speed = Math.pow(val, 2) * speedMultiplier],
     "ParticleGravity": [csz.engine.antigravity, (val) => csz.engine.antigravity = val * gravityMultiplier],
-    "GravityCurve": [csz.engine.gravityCurve, (val) => csz.engine.gravityCurve = val * 2],
-    "CenterGravity": [csz.engine.centerGravity, (val) => csz.engine.centerGravity = Math.pow(val, 2) * centerGravityMultiplier],
   }
 
   // componets
@@ -68,10 +82,31 @@ window.onload = () => {
   ]
   const nameElem = document.getElementById('name')
 
+  // handle text embeddings
+  const embeddingText = document.getElementById('embedding-text')
+  const typeDelay = 200
+  let lastTyped = 0
+  let words = []
+  const updateEmbedding = (event) => {
+    // ignore if whitespace or newline added
+    if (event.data && event.data.match(/\s/)) { csz.reset(); return }
+    // embed text to csv
+    const text = event.target.value.trim()
+    if (!text) { return }
+    words = text.split(/\s+/)
+    csz.embed(text)
+  }
+  embeddingText.addEventListener('input', (event) => {
+    const now = Date.now()
+    if (now - lastTyped < typeDelay) { return }
+    lastTyped = now
+    setTimeout(updateEmbedding, typeDelay, event)
+  })
+  embeddingText.dispatchEvent(new Event('input'))
+
   // handle file imports
   fileInput.addEventListener('change', (event) => {
     csz.importCSV(event.target.files[0])
-
   })
   if (fileInput.value) { csz.importCSV(fileInput.files[0]) }
 
@@ -98,6 +133,50 @@ window.onload = () => {
     csz.importURL('examples/test_lowess_simple.csv')
   })
 
+  // show particle data on hover
+  const mouseTip = document.createElement('div')
+  document.body.appendChild(mouseTip)
+  mouseTip.classList.add('mouse-tip', 'hidden')
+  document.addEventListener('mousemove', (event) => {
+    //let clickX = event.clientX / canvas.width
+    //let clickY = event.clientY / canvas.height
+    let mouseX = event.clientX / canvas.width / csz.engine.screenFill % 1
+    let mouseY = event.clientY / canvas.height / csz.engine.screenFill % 1
+    // loop through particles to see if any has a distance less than 10
+    let radius = 0.04 // in screen percentage
+    let minDistance = radius
+    let minIdx = -1
+    for (let i=0; i<csz.engine.particles.length; i++) {
+      const particle = csz.engine.particles[i]
+      let distance = Math.sqrt(
+        Math.pow(particle.x - mouseX, 2) +
+        Math.pow(particle.y - mouseY, 2)
+      )
+      if (distance < minDistance) {
+        minDistance = distance
+        minIdx = i
+      }
+    }
+
+    if (minIdx < 0 || minDistance > radius) {
+      mouseTip.classList.add('hidden')
+    } else {
+      mouseTip.innerHTML = ''
+      const particle = csz.engine.particles[minIdx]
+      const word = words[minIdx]
+      const addLabel = (value) => {
+        const label = document.createElement('div')
+        label.innerHTML = `${value}`
+        mouseTip.appendChild(label)
+      }
+      //addLabel(`(${particle.x.toFixed(2)}, ${particle.y.toFixed(2)})`)
+      addLabel(`${word}`)
+      mouseTip.classList.remove('hidden')
+      mouseTip.style.left = `${event.clientX + 10}px`
+      mouseTip.style.top = `${event.clientY + 10}px`
+    }
+  })
+
   //
   // CSZ EVENTS
 
@@ -109,6 +188,7 @@ window.onload = () => {
   csz.onReady = () => {
     // color mapping (create options) 
     for (let elem of colorColumns) {
+      elem.innerHTML = '' // reset options
       for (let column of csz.dimensions) {
         let option = document.createElement('option')
         option.value = column
@@ -140,7 +220,11 @@ window.onload = () => {
 <!-- HTML -->
 <body>
   <div class="content">
-    <h1>csz</h1><h2 id="name"></h2>
+    <h1>csz</h1>
+    <h2 id="name">
+      <h3>see <a href="https://dot.leonk.dev">dot</a></h3>
+    </h2>
+    <textarea id="embedding-text"></textarea>
     <input type="button" id="sample" value="Load example" />
     <input type="file" id="fileInput" />
     <div id="sliders"></div>
